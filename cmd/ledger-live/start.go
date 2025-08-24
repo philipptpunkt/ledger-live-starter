@@ -5,7 +5,11 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/huh"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
+	"ledger-live-starter/cmd/ledger-live/presets"
+	"ledger-live-starter/cmd/ledger-live/setup"
+	"ledger-live-starter/cmd/ledger-live/ui"
 )
 
 var startCmd = &cobra.Command{
@@ -20,14 +24,16 @@ func init() {
 }
 
 func runStartCmd(cmd *cobra.Command, args []string) {
-	fmt.Println(BoldColorText("Ledger Live Starter", Cyan))
+	fmt.Println(ui.GetLogo())
 	fmt.Println()
-
+	fmt.Println(getVersionDisplay())
+	fmt.Println()
+	
 	// Load configuration
-	config, err := loadConfig()
+	config, err := setup.LoadConfig()
 	if err != nil {
-		fmt.Printf("%s Warning: Could not load config.json (%v), using defaults\n\n", BoldColorText("!", Yellow), err)
-		config = getDefaultConfig()
+		fmt.Printf("%s %s\n\n", WarningText("Warning:"), NormalText(fmt.Sprintf("Could not load config.json (%v), using defaults", err)))
+		config = setup.GetDefaultConfig()
 	}
 
 	// Show main menu based on preset availability
@@ -41,7 +47,7 @@ func runStartCmd(cmd *cobra.Command, args []string) {
 func showPresetMenu(config *Config) {
 	var options []huh.Option[string]
 	
-	// Add presets
+	// Add presets with default styling
 	for _, preset := range config.Presets {
 		options = append(options, huh.NewOption(preset.Name, preset.Name))
 	}
@@ -49,6 +55,7 @@ func showPresetMenu(config *Config) {
 	// Add standard options
 	options = append(options, huh.NewOption("Start manually", "manual"))
 	options = append(options, huh.NewOption("More", "more"))
+	options = append(options, huh.NewOption("Exit", "exit"))
 
 	var selected string
 	
@@ -56,14 +63,15 @@ func showPresetMenu(config *Config) {
 		huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("Choose an option:").
+				Description("Select a preset to start the application directly."). // make dynamic based on selected option
 				Options(options...).
 				Value(&selected),
 		),
 	)
 
-	err := form.Run()
+	err := RunStyledForm(form)
 	if err != nil {
-		fmt.Println("\n❌ Selection cancelled")
+		ShowCancellationMessage()
 		return
 	}
 
@@ -73,6 +81,9 @@ func showPresetMenu(config *Config) {
 		startManually()
 	case "more":
 		showMoreMenu(config)
+	case "exit":
+		ShowGoodbyeMessage()
+		return
 	default:
 		// User selected a preset
 		executePreset(selected, config)
@@ -84,6 +95,7 @@ func showNoPresetMenu() {
 	options = append(options, huh.NewOption("Create preset", "create"))
 	options = append(options, huh.NewOption("Start manually", "manual"))
 	options = append(options, huh.NewOption("More", "more"))
+	options = append(options, huh.NewOption("Exit", "exit"))
 
 	var selected string
 	
@@ -96,19 +108,22 @@ func showNoPresetMenu() {
 		),
 	)
 
-	err := form.Run()
+	err := RunStyledForm(form)
 	if err != nil {
-		fmt.Println("\n❌ Selection cancelled")
+		ShowCancellationMessage()
 		return
 	}
 
 	switch selected {
 	case "create":
-		createPreset()
+		presets.CreatePreset()
 	case "manual":
 		startManually()
 	case "more":
 		showMoreMenu(nil) // Pass nil since no presets exist
+	case "exit":
+		ShowGoodbyeMessage()
+		return
 	}
 }
 
@@ -123,14 +138,14 @@ func executePreset(presetName string, config *Config) {
 	}
 
 	if selectedPreset == nil {
-		fmt.Printf("❌ Preset '%s' not found\n", presetName)
+		fmt.Printf("%s %s '%s' %s\n", ErrorText("❌"), NormalText("Preset"), HighlightText(presetName), NormalText("not found"))
 		return
 	}
 
 	// Convert preset to command
 	cmdInfo := buildPresetCommand(selectedPreset, config)
 	
-	fmt.Printf("✅ Starting preset: %s\n", selectedPreset.Name)
+	fmt.Printf("%s %s %s\n", SuccessText("✅"), NormalText("Starting preset:"), HighlightText(selectedPreset.Name))
 	executeCommand(cmdInfo)
 }
 
@@ -174,13 +189,13 @@ func showMoreMenu(config *Config) {
 	var options []huh.Option[string]
 	
 	// Always show "Edit presets" option
-	options = append(options, huh.NewOption(BoldColorText("Edit presets", Green), "edit"))
+	options = append(options, huh.NewOption("Edit presets", "edit"))
 	
 	// Always show "Edit parameters" option
-	options = append(options, huh.NewOption(BoldColorText("Edit parameters", Yellow), "parameters"))
+	options = append(options, huh.NewOption("Edit parameters", "parameters"))
 	
 	// Always show back option
-	options = append(options, huh.NewOption(ColorText("Back", Red), "back"))
+	options = append(options, huh.NewOption("Back", "back"))
 
 	var selected string
 	
@@ -193,15 +208,15 @@ func showMoreMenu(config *Config) {
 		),
 	)
 
-	err := form.Run()
+	err := RunStyledForm(form)
 	if err != nil {
-		fmt.Println("\n❌ Selection cancelled")
+		ShowCancellationMessage()
 		return
 	}
 
 	switch selected {
 	case "edit":
-		editPresets()
+		presets.EditPresets()
 	case "parameters":
 		editParameters()
 	case "back":
@@ -213,3 +228,21 @@ func showMoreMenu(config *Config) {
 		}
 	}
 }
+
+// Get version display with adaptive text color (matching theme.go)
+func getVersionDisplay() string {
+	// Define adaptive text color (same as theme.go)
+	textColor := lipgloss.AdaptiveColor{
+		Light: "#1a1a1a", // Dark text for light backgrounds
+		Dark:  "#ffffff", // White text for dark backgrounds
+	}
+	
+	// Create version text with adaptive color and center alignment
+	versionStyle := lipgloss.NewStyle().
+		Foreground(textColor).
+		Align(lipgloss.Center).
+		MarginLeft(4) // Same left margin as logo
+	
+	return versionStyle.Render(fmt.Sprintf("v%s", Version))
+}
+

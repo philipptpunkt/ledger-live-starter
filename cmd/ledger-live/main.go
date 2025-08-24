@@ -5,6 +5,9 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"ledger-live-starter/cmd/ledger-live/presets"
+	"ledger-live-starter/cmd/ledger-live/setup"
+
 )
 
 var configPath string // Global config path variable
@@ -25,6 +28,66 @@ func init() {
 	// Add global config flag
 	rootCmd.PersistentFlags().StringVar(&configPath, "config", "", "config file path (default: ~/.ledger-live/config.json)")
 	
+	// Set up the setup package dependencies
+	setup.RunStyledForm = RunStyledForm
+	
+	// Set up theme-based text functions for setup package
+	setup.TitleText = TitleText
+	setup.ErrorText = ErrorText
+	setup.SuccessText = SuccessText
+	setup.InfoTextTitle = InfoTextTitle
+	setup.HighlightText = HighlightText
+	setup.NormalText = NormalText
+	setup.WarningText = WarningText
+
+	// Set up theme-based text functions for presets package
+	presets.TitleText = TitleText
+	presets.ErrorText = ErrorText
+	presets.SuccessText = SuccessText
+	presets.InfoTextTitle = InfoTextTitle
+	presets.HighlightText = HighlightText
+	presets.NormalText = NormalText
+	presets.WarningText = WarningText
+
+	// Set up form execution functions for presets package
+	presets.RunStyledForm = RunStyledForm
+	presets.ShowCancellationMessage = ShowCancellationMessage
+	presets.ShowConfirmationCancelledMessage = ShowConfirmationCancelledMessage
+
+	// Set up UI functions for presets package with type adapters
+	presets.InputPresetName = inputPresetName
+	presets.SelectPlatform = selectPlatform
+	presets.SelectParameters = selectParameters
+	presets.BuildPresetCommand = func(preset *setup.Preset, config *setup.Config) *presets.CommandInfo {
+		// Convert to main package types and call original function
+		mainPreset := (*Preset)(preset)
+		mainConfig := (*Config)(config)
+		cmdInfo := buildPresetCommand(mainPreset, mainConfig)
+		// Convert back to presets package type
+		return &presets.CommandInfo{
+			BaseCommand: cmdInfo.BaseCommand,
+			EnvVars:     cmdInfo.EnvVars,
+			WorkingDir:  cmdInfo.WorkingDir,
+		}
+	}
+	presets.ExecuteCommand = func(cmdInfo *presets.CommandInfo) {
+		// Convert to main package type and call original function
+		mainCmdInfo := &CommandInfo{
+			BaseCommand: cmdInfo.BaseCommand,
+			EnvVars:     cmdInfo.EnvVars,
+			WorkingDir:  cmdInfo.WorkingDir,
+		}
+		executeCommand(mainCmdInfo)
+	}
+	presets.ShowMoreMenu = func(config *setup.Config) {
+		// Convert to main package type and call original function
+		mainConfig := (*Config)(config)
+		showMoreMenu(mainConfig)
+	}
+	
+	// Add the setup command
+	rootCmd.AddCommand(setup.SetupCmd)
+	
 	// Disable completion
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.CompletionOptions.DisableNoDescFlag = true
@@ -32,6 +95,11 @@ func init() {
 }
 
 func main() {
+	// Pass config path to setup package
+	if configPath != "" {
+		setup.SetConfigPath(configPath)
+	}
+	
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

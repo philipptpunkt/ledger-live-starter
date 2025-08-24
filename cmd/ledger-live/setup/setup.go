@@ -1,4 +1,4 @@
-package main
+package setup
 
 import (
 	"fmt"
@@ -9,31 +9,27 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var setupCmd = &cobra.Command{
+var SetupCmd = &cobra.Command{
 	Use:   "setup",
 	Short: "Run setup to configure ledger-live-starter",
 	Long:  `Initialize ledger-live-starter configuration with your preferences.`,
 	Run:   runSetupCmd,
 }
 
-func init() {
-	rootCmd.AddCommand(setupCmd)
-}
-
 func runSetupCmd(cmd *cobra.Command, args []string) {
-	fmt.Printf("%s Welcome to Ledger Live Starter setup!\n\n", BoldColorText("Setup Mode", Cyan))
+	fmt.Printf("%s %s\n\n", TitleText("Setup Mode"), NormalText("Welcome to Ledger Live Starter setup!"))
 	
-	_, err := runSetupMode()
+	_, err := RunSetupMode()
 	if err != nil {
-		fmt.Printf("%s Setup failed: %v\n", ColorText("Error:", Red), err)
+		fmt.Printf("%s %s %s\n", ErrorText("Error:"), NormalText("Setup failed:"), NormalText(err.Error()))
 		return
 	}
 }
 
-func runSetupMode() (*Config, error) {
-	config := getDefaultConfig()
+func RunSetupMode() (*Config, error) {
+	config := GetDefaultConfig()
 	
-	fmt.Printf("%s Setting up configuration at: %s\n\n", BoldColorText("Info:", Blue), getConfigPath())
+	fmt.Printf("%s %s %s\n\n", TitleText("Info:"), NormalText("Setting up configuration at:"), HighlightText(GetConfigPath()))
 
 	// Step 1: Get Ledger Live path
 	var ledgerLivePath string
@@ -56,7 +52,7 @@ func runSetupMode() (*Config, error) {
 		),
 	)
 
-	err := pathForm.Run()
+	err := RunStyledForm(pathForm)
 	if err != nil {
 		return nil, fmt.Errorf("setup cancelled: %v", err)
 	}
@@ -64,10 +60,10 @@ func runSetupMode() (*Config, error) {
 	config.LedgerLivePath = strings.TrimSpace(ledgerLivePath)
 
 	// Step 2: Show default parameters and ask if user wants to modify
-	fmt.Printf("\n%s Default parameters available:\n", BoldColorText("Parameters:", Yellow))
+	fmt.Printf("\n%s %s\n", TitleText("Parameters:"), NormalText("Default parameters available:"))
 	for i, param := range config.Parameters {
-		fmt.Printf("  %d. %s - %s\n", i+1, BoldText(param.Name), param.Description)
-		fmt.Printf("     %s\n", ColorText(param.EnvVar, Cyan))
+		fmt.Printf("  %d. %s - %s\n", i+1, HighlightText(param.Name), NormalText(param.Description))
+		fmt.Printf("     %s\n", NormalText(param.EnvVar))
 	}
 	fmt.Println()
 
@@ -80,7 +76,7 @@ func runSetupMode() (*Config, error) {
 		),
 	)
 
-	err = addParamsForm.Run()
+	err = RunStyledForm(addParamsForm)
 	if err != nil {
 		return nil, fmt.Errorf("setup cancelled: %v", err)
 	}
@@ -91,31 +87,31 @@ func runSetupMode() (*Config, error) {
 	}
 
 	// Step 4: Save configuration
-	err = ensureConfigDirExists()
+	err = EnsureConfigDirExists()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create config directory: %v", err)
 	}
 
-	err = saveConfigToPath(config, getConfigPath())
+	err = SaveConfigToPath(config, GetConfigPath())
 	if err != nil {
 		return nil, fmt.Errorf("failed to save configuration: %v", err)
 	}
 
 	// Step 5: Show completion message
-	fmt.Printf("\n%s Setup completed successfully!\n", ColorText("Success:", Green))
-	fmt.Printf("Configuration saved to: %s\n\n", BoldText(getConfigPath()))
+	fmt.Printf("\n%s %s\n", SuccessText("Success:"), NormalText("Setup completed successfully!"))
+	fmt.Printf("%s %s\n\n", NormalText("Configuration saved to:"), HighlightText(GetConfigPath()))
 	
-	fmt.Printf("%s How to use:\n", BoldColorText("Next Steps:", Cyan))
-	fmt.Printf("  %s                    - Start with interactive menu\n", BoldText("ledger-live start"))
-	fmt.Printf("  %s --config /path     - Use custom config file\n", BoldText("ledger-live start"))
-	fmt.Printf("  %s                    - Run setup again\n", BoldText("ledger-live setup"))
+	fmt.Printf("%s %s\n", TitleText("Next Steps:"), NormalText("How to use:"))
+	fmt.Printf("  %s %s\n", HighlightText("ledger-live start"), NormalText("                    - Start with interactive menu"))
+	fmt.Printf("  %s %s\n", HighlightText("ledger-live start --config /path"), NormalText("     - Use custom config file"))
+	fmt.Printf("  %s %s\n", HighlightText("ledger-live setup"), NormalText("                    - Run setup again"))
 	fmt.Println()
 
 	return config, nil
 }
 
 func addCustomParameters(config *Config) *Config {
-	fmt.Printf("\n%s Add custom parameters:\n", BoldColorText("Custom Setup:", Green))
+	fmt.Printf("\n%s %s\n", TitleText("Custom Setup:"), NormalText("Add custom parameters:"))
 	
 	for {
 		var addAnother bool
@@ -131,7 +127,7 @@ func addCustomParameters(config *Config) *Config {
 			),
 		)
 		
-		if err := nameForm.Run(); err != nil {
+		if err := RunStyledForm(nameForm); err != nil {
 			break
 		}
 		
@@ -155,7 +151,7 @@ func addCustomParameters(config *Config) *Config {
 			),
 		)
 		
-		if err := envForm.Run(); err != nil {
+		if err := RunStyledForm(envForm); err != nil {
 			break
 		}
 
@@ -169,7 +165,7 @@ func addCustomParameters(config *Config) *Config {
 			),
 		)
 		
-		descForm.Run() // Optional field, ignore errors
+		RunStyledForm(descForm) // Optional field, ignore errors
 
 		// Add parameter
 		newParam := Parameter{
@@ -179,7 +175,7 @@ func addCustomParameters(config *Config) *Config {
 		}
 		config.Parameters = append(config.Parameters, newParam)
 		
-		fmt.Printf("%s Added parameter: %s\n", ColorText("✓", Green), newParam.Name)
+		fmt.Printf("%s %s %s\n", SuccessText("✓"), NormalText("Added parameter:"), HighlightText(newParam.Name))
 
 		// Ask for another
 		anotherForm := huh.NewForm(
@@ -190,10 +186,25 @@ func addCustomParameters(config *Config) *Config {
 			),
 		)
 		
-		if err := anotherForm.Run(); err != nil || !addAnother {
+		if err := RunStyledForm(anotherForm); err != nil || !addAnother {
 			break
 		}
 	}
 	
 	return config
 }
+
+// These functions need to be imported from the main package
+// We'll define them as variables that get set from main
+var (
+	RunStyledForm func(*huh.Form) error
+	
+	// Theme-based text functions
+	TitleText     func(text string) string
+	ErrorText     func(text string) string
+	SuccessText   func(text string) string
+	InfoTextTitle func(text string) string
+	HighlightText func(text string) string
+	NormalText    func(text string) string
+	WarningText   func(text string) string
+)
