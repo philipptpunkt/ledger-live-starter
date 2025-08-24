@@ -28,6 +28,21 @@ func init() {
 	// Add global config flag
 	rootCmd.PersistentFlags().StringVar(&configPath, "config", "", "config file path (default: ~/.ledger-live/config.json)")
 	
+	// Add version flag
+	var showVersion bool
+	rootCmd.Flags().BoolVarP(&showVersion, "version", "V", false, "show version information")
+	
+	// Override the Run function to handle --version flag
+	originalRun := rootCmd.Run
+	rootCmd.Run = func(cmd *cobra.Command, args []string) {
+		if showVersion {
+			// Just show the version number
+			fmt.Printf(Version)
+			return
+		}
+		originalRun(cmd, args)
+	}
+	
 	// Set up the setup package dependencies
 	setup.RunStyledForm = RunStyledForm
 	
