@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0](https://github.com/philipptpunkt/ledger-live-starter/compare/v1.2.0...v1.3.0) (2025-08-24)
+
+
+### Features
+
+* add update check and fix install link ([9641ade](https://github.com/philipptpunkt/ledger-live-starter/commit/9641adeb56b25b067cfd08b6b2bedeb2264118c3))
+
 ## [1.2.0](https://github.com/philipptpunkt/ledger-live-starter/compare/v1.1.0...v1.2.0) (2025-08-24)
 
 
