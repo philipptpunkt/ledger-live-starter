@@ -26,7 +26,7 @@ func init() {
 func runStartCmd(cmd *cobra.Command, args []string) {
 	fmt.Println(ui.GetLogo())
 	fmt.Println()
-	fmt.Println(getVersionDisplay())
+	fmt.Println(getVersionOrUpdateDisplay())
 	fmt.Println()
 	
 	// Load configuration
@@ -229,7 +229,8 @@ func showMoreMenu(config *Config) {
 	}
 }
 
-// Get version display with adaptive text color (matching theme.go)
+// Deprecated: Use getVersionOrUpdateDisplay() instead
+// Kept for backward compatibility, but now just shows current version
 func getVersionDisplay() string {
 	// Define adaptive text color (same as theme.go)
 	textColor := lipgloss.AdaptiveColor{
@@ -245,4 +246,3 @@ func getVersionDisplay() string {
 	
 	return versionStyle.Render(fmt.Sprintf("v%s", Version))
 }
-

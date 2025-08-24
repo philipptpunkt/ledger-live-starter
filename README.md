@@ -19,13 +19,13 @@
 ### Unix/macOS (Recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/philipptpunkt/ledger-live-starter/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/philipptpunkt/ledger-live-starter/refs/heads/main/scripts/install.sh | bash
 ```
 
 ### Windows (PowerShell as Administrator)
 
 ```powershell
-iwr -useb https://raw.githubusercontent.com/philipptpunkt/ledger-live-starter/main/scripts/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/philipptpunkt/ledger-live-starter/refs/heads/main/scripts/install.ps1 | iex
 ```
 
 ### Manual Download
@@ -198,10 +198,10 @@ To update to the latest version, simply run the install command again:
 
 ```bash
 # Unix/macOS
-curl -fsSL https://raw.githubusercontent.com/philipptpunkt/ledger-live-starter/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/philipptpunkt/ledger-live-starter/refs/heads/main/scripts/install.sh | bash
 
 # Windows
-iwr -useb https://raw.githubusercontent.com/philipptpunkt/ledger-live-starter/main/scripts/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/philipptpunkt/ledger-live-starter/refs/heads/main/scripts/install.ps1 | iex
 ```
 
 ## Contributing
