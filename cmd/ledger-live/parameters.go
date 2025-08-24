@@ -5,19 +5,17 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/huh"
+	"ledger-live-starter/cmd/ledger-live/setup"
 )
 
 // Parameter management functionality
 
 func editParameters() {
-	fmt.Println(BoldColorText("Edit Parameters", Yellow))
-	fmt.Println()
-
 	// Load configuration
-	config, err := loadConfig()
+	config, err := setup.LoadConfig()
 	if err != nil {
-		fmt.Printf("%s Warning: Could not load config.json (%v), using defaults\n\n", BoldColorText("!", Yellow), err)
-		config = getDefaultConfig()
+		fmt.Printf("%s %s\n\n", WarningText("Warning:"), NormalText(fmt.Sprintf("Could not load config.json (%v), using defaults", err)))
+		config = setup.GetDefaultConfig()
 	}
 
 	// Show parameter management menu
@@ -28,16 +26,16 @@ func showParameterManagementMenu(config *Config) {
 	var options []huh.Option[string]
 	
 	// Always available options
-	options = append(options, huh.NewOption(BoldColorText("Add new parameter", Green), "add"))
+	options = append(options, huh.NewOption("Add new parameter", "add"))
 	
 	// Only show edit/delete if parameters exist
 	if len(config.Parameters) > 0 {
-		options = append(options, huh.NewOption(BoldColorText("Edit parameter", Blue), "edit"))
-		options = append(options, huh.NewOption(BoldColorText("Delete parameter", Red), "delete"))
+		options = append(options, huh.NewOption("Edit parameter", "edit"))
+		options = append(options, huh.NewOption("Delete parameter", "delete"))
 	}
 	
-	options = append(options, huh.NewOption(ColorText("Show all parameters", Cyan), "show"))
-	options = append(options, huh.NewOption(ColorText("Back", Red), "back"))
+	options = append(options, huh.NewOption("Show all parameters", "show"))
+	options = append(options, huh.NewOption("Back", "back"))
 
 	var selected string
 	
@@ -50,9 +48,9 @@ func showParameterManagementMenu(config *Config) {
 		),
 	)
 
-	err := form.Run()
+	err := RunStyledForm(form)
 	if err != nil {
-		fmt.Println("\n❌ Selection cancelled")
+		ShowCancellationMessage()
 		return
 	}
 
@@ -62,16 +60,22 @@ func showParameterManagementMenu(config *Config) {
 	case "edit":
 		editSingleParameterMenu(config)
 	case "delete":
-		deleteSingleParameterMenu(config)
+		showDeleteParametersMenu(config)
 	case "show":
 		showAllParameters(config)
 	case "back":
+		// Load config and navigate back to more menu
+		config, err := setup.LoadConfig()
+		if err != nil {
+			config = setup.GetDefaultConfig()
+		}
+		showMoreMenu(config)
 		return
 	}
 }
 
 func addNewParameter(config *Config) {
-	fmt.Println(BoldColorText("Add New Parameter", Green))
+	fmt.Println(TitleText("Add New Parameter"))
 	fmt.Println()
 
 	// Get parameter name
@@ -96,9 +100,9 @@ func addNewParameter(config *Config) {
 		),
 	)
 
-	err := nameForm.Run()
+	err := RunStyledForm(nameForm)
 	if err != nil {
-		fmt.Printf("%s Parameter name input cancelled\n", ColorText("Info:", Yellow))
+		fmt.Printf("%s %s\n", InfoTextTitle("Info:"), NormalText("Parameter name input cancelled"))
 		return
 	}
 
@@ -122,9 +126,9 @@ func addNewParameter(config *Config) {
 		),
 	)
 
-	err = envVarForm.Run()
+	err = RunStyledForm(envVarForm)
 	if err != nil {
-		fmt.Printf("%s Environment variable input cancelled\n", ColorText("Info:", Yellow))
+		fmt.Printf("%s %s\n", InfoTextTitle("Info:"), NormalText("Environment variable input cancelled"))
 		return
 	}
 
@@ -139,9 +143,9 @@ func addNewParameter(config *Config) {
 		),
 	)
 
-	err = descForm.Run()
+	err = RunStyledForm(descForm)
 	if err != nil {
-		fmt.Printf("%s Description input cancelled\n", ColorText("Info:", Yellow))
+		fmt.Printf("%s %s\n", InfoTextTitle("Info:"), NormalText("Description input cancelled"))
 		return
 	}
 
@@ -155,13 +159,13 @@ func addNewParameter(config *Config) {
 	config.Parameters = append(config.Parameters, newParam)
 
 	// Save config
-	err = saveConfig(config)
+	err = setup.SaveConfig(config)
 	if err != nil {
-		fmt.Printf("%s Error saving parameter: %v\n", ColorText("Error:", Red), err)
+		fmt.Printf("%s %s %s\n", ErrorText("Error:"), NormalText("Error saving parameter:"), NormalText(err.Error()))
 		return
 	}
 
-	fmt.Printf("%s Parameter '%s' added successfully!\n\n", ColorText("Success:", Green), newParam.Name)
+	fmt.Printf("%s %s '%s' %s\n\n", SuccessText("Success:"), NormalText("Parameter"), HighlightText(newParam.Name), NormalText("added successfully!"))
 	
 	// Show the parameter management menu again
 	showParameterManagementMenu(config)
@@ -169,15 +173,15 @@ func addNewParameter(config *Config) {
 
 func editSingleParameterMenu(config *Config) {
 	if len(config.Parameters) == 0 {
-		fmt.Printf("%s No parameters found to edit.\n", ColorText("Info:", Yellow))
+		fmt.Printf("%s %s\n", InfoTextTitle("Info:"), NormalText("No parameters found to edit."))
 		return
 	}
 
 	var options []huh.Option[string]
 	for _, param := range config.Parameters {
-		options = append(options, huh.NewOption(fmt.Sprintf("%s %s", BoldText("Edit"), param.Name), param.Name))
+		options = append(options, huh.NewOption(param.Name, param.Name))
 	}
-	options = append(options, huh.NewOption(ColorText("Back", Red), "back"))
+	options = append(options, huh.NewOption("Back", "back"))
 
 	var selected string
 	
@@ -190,9 +194,9 @@ func editSingleParameterMenu(config *Config) {
 		),
 	)
 
-	err := form.Run()
+	err := RunStyledForm(form)
 	if err != nil {
-		fmt.Println("\n❌ Selection cancelled")
+		ShowCancellationMessage()
 		return
 	}
 
@@ -218,11 +222,11 @@ func editSingleParameter(paramName string, config *Config) {
 	}
 
 	if currentParam == nil {
-		fmt.Printf("%s Parameter '%s' not found\n", ColorText("Error:", Red), paramName)
+		fmt.Printf("%s %s '%s' %s\n", ErrorText("Error:"), NormalText("Parameter"), HighlightText(paramName), NormalText("not found"))
 		return
 	}
 
-	fmt.Printf("%s %s\n\n", BoldColorText("Editing parameter:", Blue), currentParam.Name)
+	fmt.Printf("%s %s\n\n", TitleText("Editing parameter:"), NormalText(currentParam.Name))
 
 	// Pre-fill with current values
 	name := currentParam.Name
@@ -264,9 +268,9 @@ func editSingleParameter(paramName string, config *Config) {
 		),
 	)
 
-	err := form.Run()
+	err := RunStyledForm(form)
 	if err != nil {
-		fmt.Printf("%s Parameter editing cancelled\n", ColorText("Info:", Yellow))
+		fmt.Printf("%s %s\n", InfoTextTitle("Info:"), NormalText("Parameter editing cancelled"))
 		return
 	}
 
@@ -276,112 +280,160 @@ func editSingleParameter(paramName string, config *Config) {
 	config.Parameters[paramIndex].Description = strings.TrimSpace(description)
 
 	// Save config
-	err = saveConfig(config)
+	err = setup.SaveConfig(config)
 	if err != nil {
-		fmt.Printf("%s Error saving parameter: %v\n", ColorText("Error:", Red), err)
+		fmt.Printf("%s %s %s\n", ErrorText("Error:"), NormalText("Error saving parameter:"), NormalText(err.Error()))
 		return
 	}
 
-	fmt.Printf("%s Parameter '%s' updated successfully!\n\n", ColorText("Success:", Green), strings.TrimSpace(name))
+	fmt.Printf("%s %s '%s' %s\n\n", SuccessText("Success:"), NormalText("Parameter"), HighlightText(strings.TrimSpace(name)), NormalText("updated successfully!"))
 	
 	// Return to parameter management menu
 	showParameterManagementMenu(config)
 }
 
-func deleteSingleParameterMenu(config *Config) {
+func showDeleteParametersMenu(config *Config) {
 	if len(config.Parameters) == 0 {
-		fmt.Printf("%s No parameters found to delete.\n", ColorText("Info:", Yellow))
+		fmt.Printf("%s %s\n", InfoTextTitle("Info:"), NormalText("No parameters available to delete."))
 		return
 	}
 
 	var options []huh.Option[string]
 	for _, param := range config.Parameters {
-		options = append(options, huh.NewOption(fmt.Sprintf("%s %s", BoldColorText("Delete", Red), param.Name), param.Name))
+		options = append(options, huh.NewOption(param.Name, param.Name))
 	}
-	options = append(options, huh.NewOption(ColorText("Back", Red), "back"))
 
-	var selected string
+	var selectedParameters []string
 	
 	form := huh.NewForm(
 		huh.NewGroup(
-			huh.NewSelect[string]().
-				Title("Choose a parameter to delete:").
+			huh.NewMultiSelect[string]().
+				Title("Choose parameters:").
+				DescriptionFunc(func() string {
+					if len(selectedParameters) == 0 {
+						return "Select parameter(s) to delete (use no selection and ENTER to exit)"
+					}
+					if len(selectedParameters) == 1 {
+						// Show description of the single selected parameter
+						for _, param := range config.Parameters {
+							if param.Name == selectedParameters[0] {
+								if param.Description != "" {
+									return param.Description
+								}
+								return "- no description available -"
+							}
+						}
+					}
+					// Multiple parameters selected
+					return fmt.Sprintf("%d parameters selected for deletion", len(selectedParameters))
+				}, &selectedParameters).
 				Options(options...).
-				Value(&selected),
+				Value(&selectedParameters),
 		),
 	)
 
-	err := form.Run()
+	err := RunStyledForm(form)
 	if err != nil {
-		fmt.Println("\n❌ Selection cancelled")
-		return
-	}
-
-	if selected == "back" {
+					fmt.Printf("\n%s %s\n", ErrorText("❌"), NormalText("Selection cancelled"))
 		showParameterManagementMenu(config)
 		return
 	}
 
-	deleteParameter(selected, config)
-}
-
-func deleteParameter(paramName string, config *Config) {
-	// Find the parameter index
-	var paramIndex = -1
-	
-	for i, param := range config.Parameters {
-		if param.Name == paramName {
-			paramIndex = i
-			break
-		}
-	}
-
-	if paramIndex == -1 {
-		fmt.Printf("%s Parameter '%s' not found\n", ColorText("Error:", Red), paramName)
+	if len(selectedParameters) == 0 {
+		fmt.Printf("%s %s\n", InfoTextTitle("Info:"), NormalText("No parameters selected for deletion."))
+		showParameterManagementMenu(config)
 		return
 	}
 
-	// Confirm deletion
+	// Show confirmation dialog
+	confirmParameterDeletion(selectedParameters, config)
+}
+
+func confirmParameterDeletion(paramNames []string, config *Config) {
 	var confirm bool
+	
+	// Build confirmation message
+	message := fmt.Sprintf("Are you sure you want to delete %d parameter(s)?", len(paramNames))
+	if len(paramNames) == 1 {
+		message = fmt.Sprintf("Are you sure you want to delete '%s'?", paramNames[0])
+	}
 	
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewConfirm().
-				Title(fmt.Sprintf("Are you sure you want to delete '%s'?", paramName)).
+				Title(message).
+				Affirmative("Delete").
+				Negative("Cancel").
 				Value(&confirm),
 		),
 	)
 
-	err := form.Run()
+	err := RunStyledForm(form)
 	if err != nil {
-		fmt.Println("\n❌ Deletion cancelled")
+		ShowConfirmationCancelledMessage()
+		showParameterManagementMenu(config)
 		return
 	}
 
 	if confirm {
-		// Remove the parameter from the slice
-		config.Parameters = append(config.Parameters[:paramIndex], config.Parameters[paramIndex+1:]...)
-		saveAndConfirm(config, fmt.Sprintf("✅ Parameter '%s' deleted", paramName))
+		// Delete the selected parameters
+		deleteMultipleParameters(paramNames, config)
+	} else {
+		fmt.Printf("%s %s\n", InfoTextTitle("Info:"), NormalText("Deletion cancelled."))
+		showParameterManagementMenu(config)
 	}
-	
-	// Show the parameter management menu again
+}
+
+func deleteMultipleParameters(paramNames []string, config *Config) {
+	// Create a set of parameter names for faster lookup
+	toDelete := make(map[string]bool)
+	for _, name := range paramNames {
+		toDelete[name] = true
+	}
+
+	// Filter out the parameters to delete
+	var remainingParameters []Parameter
+	var deletedCount int
+	for _, param := range config.Parameters {
+		if toDelete[param.Name] {
+			deletedCount++
+		} else {
+			remainingParameters = append(remainingParameters, param)
+		}
+	}
+
+	// Update config
+	config.Parameters = remainingParameters
+
+	// Save config
+	err := setup.SaveConfig(config)
+	if err != nil {
+		fmt.Printf("%s %s %s\n", ErrorText("Error:"), NormalText("Error saving changes:"), NormalText(err.Error()))
+		return
+	}
+
+	// Show success message
+	if deletedCount == 1 {
+		fmt.Printf("%s %s '%s' %s\n", SuccessText("Success:"), NormalText("Parameter"), HighlightText(paramNames[0]), NormalText("deleted successfully."))
+	} else {
+		fmt.Printf("%s %s %s\n", SuccessText("Success:"), HighlightText(fmt.Sprintf("%d", deletedCount)), NormalText("parameters deleted successfully."))
+	}
+
+	// Return to management menu
 	showParameterManagementMenu(config)
 }
 
 func showAllParameters(config *Config) {
-	fmt.Println(BoldColorText("All Parameters", Cyan))
-	fmt.Println()
-
 	if len(config.Parameters) == 0 {
-		fmt.Printf("%s No parameters defined yet.\n", ColorText("Info:", Yellow))
+		fmt.Printf("%s %s\n", InfoTextTitle("Info:"), NormalText("No parameters defined yet."))
 		fmt.Println()
 	} else {
 		for i, param := range config.Parameters {
-			fmt.Printf("%s Parameter %d:\n", BoldText("•"), i+1)
-			fmt.Printf("   %s %s\n", BoldText("Name:"), param.Name)
-			fmt.Printf("   %s %s\n", BoldText("Environment Variable:"), param.EnvVar)
+			fmt.Printf("%s %s %d:\n", TitleText("•"), NormalText("Parameter"), i+1)
+			fmt.Printf("   %s %s\n", InfoTextTitle("Name:"), HighlightText(param.Name))
+			fmt.Printf("   %s %s\n", InfoTextTitle("Environment Variable:"), HighlightText(param.EnvVar))
 			if param.Description != "" {
-				fmt.Printf("   %s %s\n", BoldText("Description:"), param.Description)
+				fmt.Printf("   %s %s\n", InfoTextTitle("Description:"), NormalText(param.Description))
 			}
 			fmt.Println()
 		}
@@ -392,10 +444,10 @@ func showAllParameters(config *Config) {
 	
 	// Only show Edit option if parameters exist
 	if len(config.Parameters) > 0 {
-		options = append(options, huh.NewOption(BoldColorText("Edit", Blue), "edit"))
+		options = append(options, huh.NewOption("Edit", "edit"))
 	}
 	
-	options = append(options, huh.NewOption(ColorText("Back", Red), "back"))
+	options = append(options, huh.NewOption("Back", "back"))
 
 	var selected string
 	
@@ -408,9 +460,9 @@ func showAllParameters(config *Config) {
 		),
 	)
 
-	err := form.Run()
+	err := RunStyledForm(form)
 	if err != nil {
-		fmt.Println("\n❌ Selection cancelled")
+		ShowCancellationMessage()
 		return
 	}
 

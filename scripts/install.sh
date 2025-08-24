@@ -61,7 +61,7 @@ fi
 echo -e "Download URL: ${GREEN}$DOWNLOAD_URL${NC}"
 
 # Download binary
-echo -e "${BLUE}Downloading ledger-live...${NC}"
+echo -e "${BLUE}Downloading ledger-live-starter...${NC}"
 TEMP_FILE=$(mktemp)
 curl -L -o "$TEMP_FILE" "$DOWNLOAD_URL"
 
