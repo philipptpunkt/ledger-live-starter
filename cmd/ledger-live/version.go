@@ -19,7 +19,7 @@ var versionCmd = &cobra.Command{
 	Short: "Print the version number",
 	Long:  `Print the version number of ledger-live-starter`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("%s %s\n", TitleText("Ledger Live Starter"), HighlightText("v"+Version))
+		fmt.Printf("%s %s\n", TitleText("Ledger Live Starter"), HighlightText(Version))
 		fmt.Printf("  %s %s\n", InfoTextTitle("Built:"), NormalText(BuildTime))
 		fmt.Printf("  %s %s\n", InfoTextTitle("Go:"), NormalText(runtime.Version()))
 		fmt.Printf("  %s %s/%s\n", InfoTextTitle("Platform:"), NormalText(runtime.GOOS), NormalText(runtime.GOARCH))
