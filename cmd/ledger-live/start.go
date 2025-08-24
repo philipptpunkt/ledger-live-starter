@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
+	"ledger-live-starter/cmd/ledger-live/parameters"
 	"ledger-live-starter/cmd/ledger-live/presets"
 	"ledger-live-starter/cmd/ledger-live/setup"
 	"ledger-live-starter/cmd/ledger-live/ui"
@@ -218,7 +219,11 @@ func showMoreMenu(config *Config) {
 	case "edit":
 		presets.EditPresets()
 	case "parameters":
-		editParameters()
+		config, err := setup.LoadConfig()
+		if err != nil {
+			config = setup.GetDefaultConfig()
+		}
+		parameters.ShowManagementMenu(config)
 	case "back":
 		// Go back to the appropriate menu
 		if config != nil && len(config.Presets) > 0 {

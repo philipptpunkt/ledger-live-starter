@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"ledger-live-starter/cmd/ledger-live/parameters"
 	"ledger-live-starter/cmd/ledger-live/presets"
 	"ledger-live-starter/cmd/ledger-live/setup"
 
@@ -95,6 +96,27 @@ func init() {
 		executeCommand(mainCmdInfo)
 	}
 	presets.ShowMoreMenu = func(config *setup.Config) {
+		// Convert to main package type and call original function
+		mainConfig := (*Config)(config)
+		showMoreMenu(mainConfig)
+	}
+
+	// Set up theme-based text functions for parameters package
+	parameters.TitleText = TitleText
+	parameters.ErrorText = ErrorText
+	parameters.SuccessText = SuccessText
+	parameters.InfoTextTitle = InfoTextTitle
+	parameters.HighlightText = HighlightText
+	parameters.NormalText = NormalText
+	parameters.WarningText = WarningText
+
+	// Set up form execution functions for parameters package
+	parameters.RunStyledForm = RunStyledForm
+	parameters.ShowCancellationMessage = ShowCancellationMessage
+	parameters.ShowConfirmationCancelledMessage = ShowConfirmationCancelledMessage
+
+	// Set up navigation functions for parameters package
+	parameters.ShowMoreMenu = func(config *setup.Config) {
 		// Convert to main package type and call original function
 		mainConfig := (*Config)(config)
 		showMoreMenu(mainConfig)

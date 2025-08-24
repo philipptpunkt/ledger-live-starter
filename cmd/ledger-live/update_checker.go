@@ -163,5 +163,5 @@ func getVersionOrUpdateDisplay() string {
 		Align(lipgloss.Center).
 		MarginLeft(4)
 
-	return versionStyle.Render(fmt.Sprintf("Version:%s", Version))
+	return versionStyle.Render(fmt.Sprintf("Version: %s", Version))
 }

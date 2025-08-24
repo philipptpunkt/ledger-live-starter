@@ -22,11 +22,15 @@
 curl -fsSL https://raw.githubusercontent.com/philipptpunkt/ledger-live-starter/refs/heads/main/scripts/install.sh | bash
 ```
 
+> **⚠️ Important**: After installation, **restart your terminal** (or run `source ~/.bashrc` / `source ~/.zshrc`) for the PATH changes to take effect.
+
 ### Windows (PowerShell as Administrator)
 
 ```powershell
 iwr -useb https://raw.githubusercontent.com/philipptpunkt/ledger-live-starter/refs/heads/main/scripts/install.ps1 | iex
 ```
+
+> **⚠️ Important**: After installation, **restart your terminal** (or open a new terminal window) for the PATH changes to take effect. The `ledger-live` command won't be available until you do this.
 
 ### Manual Download
 
@@ -196,13 +200,19 @@ rm -rf ~/.ledger-live
 
 To update to the latest version, simply run the install command again:
 
-```bash
-# Unix/macOS
-curl -fsSL https://raw.githubusercontent.com/philipptpunkt/ledger-live-starter/refs/heads/main/scripts/install.sh | bash
+**Unix/macOS:**
 
-# Windows
+```bash
+curl -fsSL https://raw.githubusercontent.com/philipptpunkt/ledger-live-starter/refs/heads/main/scripts/install.sh | bash
+```
+
+**Windows (PowerShell as Administrator):**
+
+```powershell
 iwr -useb https://raw.githubusercontent.com/philipptpunkt/ledger-live-starter/refs/heads/main/scripts/install.ps1 | iex
 ```
+
+> **💡 Tip**: No need to restart your terminal when updating - the PATH is already configured from the initial installation.
 
 ## Contributing
 
