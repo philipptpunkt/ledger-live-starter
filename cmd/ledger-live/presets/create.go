@@ -2,7 +2,6 @@ package presets
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/charmbracelet/huh"
 	"ledger-live-starter/cmd/ledger-live/setup"
@@ -93,7 +92,7 @@ func showPostCreationMenu(createdPreset setup.Preset, config *setup.Config) {
 	var options []huh.Option[string]
 	options = append(options, huh.NewOption("Run this preset now", "run"))
 	options = append(options, huh.NewOption("Add another preset", "add"))
-	options = append(options, huh.NewOption("Exit", "exit"))
+	options = append(options, huh.NewOption("Back", "back"))
 
 	var selected string
 	
@@ -121,9 +120,13 @@ func showPostCreationMenu(createdPreset setup.Preset, config *setup.Config) {
 	case "add":
 		// Create another preset
 		CreatePreset()
-	case "exit":
-		fmt.Printf("%s %s\n", SuccessText("✓"), NormalText("Goodbye!"))
-		os.Exit(0)
+	case "back":
+		// Navigate back to start screen
+		config, err := setup.LoadConfig()
+		if err != nil {
+			config = setup.GetDefaultConfig()
+		}
+		ShowMoreMenu(config)
 	}
 }
 
@@ -132,7 +135,7 @@ func showManagementPostCreationMenu(createdPreset setup.Preset, config *setup.Co
 	var options []huh.Option[string]
 	options = append(options, huh.NewOption("Run this preset now", "run"))
 	options = append(options, huh.NewOption("Add another preset", "add"))
-	options = append(options, huh.NewOption("Back to preset management", "back"))
+	options = append(options, huh.NewOption("Back", "back"))
 
 	var selected string
 	
